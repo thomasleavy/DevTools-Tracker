@@ -4,11 +4,21 @@ import './styling/ToolForm.css';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 
-export default function ToolForm({ editingTool, clearEdit, refreshList }) {
-  const [form, setForm] = useState({ name: '', description: '', link: '', tag: '' });
+export default function ToolForm({ editingTool, clearEdit, onSaved }) {
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    link: '',
+    tags: ''    // comma-separated input
+  });
 
   useEffect(() => {
-    if (editingTool) setForm(editingTool);
+    if (editingTool) {
+      setForm({
+        ...editingTool,
+        tags: editingTool.tags.join(', ')
+      });
+    }
   }, [editingTool]);
 
   const handleChange = e => {
@@ -18,65 +28,76 @@ export default function ToolForm({ editingTool, clearEdit, refreshList }) {
 
   const handleSubmit = e => {
     e.preventDefault();
-    const req = editingTool
-      ? axios.put(`/tools/${editingTool.id}`, form)
-      : axios.post('/tools', form);
+    const payload = {
+      name: form.name,
+      description: form.description,
+      link: form.link,
+      tags: form.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t)
+    };
 
-    req.then(() => {
-      refreshList();
-      clearEdit();
-      setForm({ name: '', description: '', link: '', tag: '' });
-    })
-    .catch(err => console.error(err));
+    const req = editingTool
+      ? axios.put(`/tools/${editingTool.id}`, payload)
+      : axios.post('/tools', payload);
+
+    req
+      .then(res => onSaved({ id: res.data.id || editingTool.id, ...payload }))
+      .catch(err => console.error(err));
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg shadow-sm">
-      <h2 className="text-lg font-bold">{editingTool ? 'Edit Tool' : 'Add New Tool'}</h2>
-      <div>
-        <label className="block text-sm font-medium">Name</label>
-        <input
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
+    <form onSubmit={handleSubmit} className="tool-form">
+      <h2>{editingTool ? 'Edit Tool' : 'Add New Tool'}</h2>
+
+      <div className="form-grid">
+        <div>
+          <label>Name</label>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div>
+          <label>Tags (comma-separated)</label>
+          <input
+            name="tags"
+            value={form.tags}
+            placeholder="e.g. frontend, api, cli"
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="full-width">
+          <label>Description</label>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="full-width">
+          <label>Link</label>
+          <input
+            name="link"
+            type="url"
+            value={form.link}
+            onChange={handleChange}
+          />
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium">Description</label>
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium">Link</label>
-        <input
-          name="link"
-          type="url"
-          value={form.link}
-          onChange={handleChange}
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium">Tag</label>
-        <input
-          name="tag"
-          value={form.tag}
-          onChange={handleChange}
-          className="mt-1 block w-full border rounded px-2 py-1"
-        />
-      </div>
-      <div className="flex space-x-2">
-        <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
+
+      <div className="actions">
+        <button type="submit">
           {editingTool ? 'Update' : 'Add'}
         </button>
         {editingTool && (
-          <button type="button" onClick={clearEdit} className="px-4 py-2 bg-gray-300 rounded">
+          <button type="button" onClick={clearEdit}>
             Cancel
           </button>
         )}
@@ -88,5 +109,5 @@ export default function ToolForm({ editingTool, clearEdit, refreshList }) {
 ToolForm.propTypes = {
   editingTool: PropTypes.object,
   clearEdit: PropTypes.func.isRequired,
-  refreshList: PropTypes.func.isRequired,
+  onSaved: PropTypes.func.isRequired
 };
