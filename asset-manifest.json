@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/DevTools-Tracker/static/css/main.a79b536e.css",
+    "main.js": "/DevTools-Tracker/static/js/main.140bd230.js",
+    "index.html": "/DevTools-Tracker/index.html",
+    "main.a79b536e.css.map": "/DevTools-Tracker/static/css/main.a79b536e.css.map",
+    "main.140bd230.js.map": "/DevTools-Tracker/static/js/main.140bd230.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a79b536e.css",
+    "static/js/main.140bd230.js"
+  ]
+}
